@@ -1,12 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace RuthMo.Models;
 
 public class Author
 {
-    public required int Id { get; set; }
-    public required string FirstName { get; set; }
-    public required string LastName { get; set; }
-    public required string NickName { get; set; }
-    public string? Email { get; set; }
-
-    public virtual required List<Motivation> Motivations { get; set; }
+    [Key] public int Id { get; set; }
+    [Required] [MaxLength(50)] public string Name { get; set; } = null!;
+    public string? NickName { get; set; }
+    public ICollection<Motivation> Motivations { get; set; } = null!;
 }
