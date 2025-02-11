@@ -1,7 +1,17 @@
-using Microsoft.EntityFrameworkCore;
-using RuthMo.Models;
-
 var builder = WebApplication.CreateBuilder(args);
+
+/*
+   using MotivationContext context = new MotivationContext();
+
+   Author author = new Author()
+   {
+       Name = "Yashar",
+       NickName = "Batman"
+   };
+
+   context.Add(author);
+   context.SaveChanges();
+ */
 
 // Add services to the container.
 
@@ -9,8 +19,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddDbContext<MotivationContext>(option => option.UseInMemoryDatabase("Motivation"));
 
 var app = builder.Build();
 

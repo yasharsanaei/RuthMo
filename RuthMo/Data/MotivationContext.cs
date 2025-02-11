@@ -10,6 +10,6 @@ public class MotivationContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql(@"Host=localhost;Username=postgres;Password=postgres;Database=ruthmo");
+        optionsBuilder.UseNpgsql(@"Host=localhost:5432;Username=postgres;Password=831373;Database=ruthmo");
     }
 }

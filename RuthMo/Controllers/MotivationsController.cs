@@ -6,4 +6,9 @@ namespace RuthMo.Controllers;
 [ApiController]
 public class MotivationsController : ControllerBase
 {
+    [HttpGet]
+    public string GetAll()
+    {
+        return "Done";
+    }
 }
