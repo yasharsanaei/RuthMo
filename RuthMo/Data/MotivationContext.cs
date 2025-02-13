@@ -6,7 +6,7 @@ namespace RuthMo.Data;
 public class MotivationContext : DbContext
 {
     public DbSet<Motivation> Motivations { get; set; } = null!;
-    public DbSet<Author> Authors { get; set; } = null!;
+    public DbSet<User> Authors { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

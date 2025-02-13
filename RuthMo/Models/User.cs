@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace RuthMo.Models;
 
-public class Author
+public class User : IdentityUser
 {
-    [Key] public int Id { get; set; }
-    [Required] [MaxLength(50)] public string Name { get; set; } = null!;
+    [EmailAddress] public override string Email { get; set; } = "";
     [MaxLength(50)] public string? NickName { get; set; }
     public ICollection<Motivation> Motivations { get; set; } = null!;
+    public UserRole Role { get; set; } = UserRole.User;
 }

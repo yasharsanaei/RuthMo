@@ -1,19 +1,53 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using RuthMo.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-/*
-   using MotivationContext context = new MotivationContext();
+var connectionString = builder.Configuration.GetConnectionString("RuthMoPostgres");
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]));
 
-   Author author = new Author()
-   {
-       Name = "Yashar",
-       NickName = "Batman"
-   };
+builder.Services.AddDbContext<MotivationContext>(options => { options.UseNpgsql(connectionString); });
 
-   context.Add(author);
-   context.SaveChanges();
- */
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<MotivationContext>()
+    .AddDefaultTokenProviders();
 
-// Add services to the container.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.Name = "RuthMoCookie";
+    options.LoginPath = "/api/auth/login";
+    options.LogoutPath = "/api/auth/logout";
+});
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies["RuthMoCookie"];
+                return Task.CompletedTask;
+            }
+        };
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = key
+        };
+    });
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -24,6 +58,33 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => policy.AllowAnyOrigin()); });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<User>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+
+
+    if (!await roleManager.RoleExistsAsync(UserRole.Admin.ToString()))
+    {
+        await roleManager.CreateAsync(new User
+        {
+            Email = "admin@ruthmo.com",
+            Role = UserRole.Admin,
+        });
+    }
+
+    // Optional: Create an admin user
+    const string adminEmail = "admin@ruthmo.com";
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+    if (adminUser == null)
+    {
+        adminUser = new User { UserName = adminEmail, Email = adminEmail };
+        await userManager.CreateAsync(adminUser, "Admin@123");
+        await userManager.AddToRoleAsync(adminUser, UserRole.Admin.ToString());
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
