@@ -61,17 +61,17 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<User>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
+    string[] roles = ["Admin", "User"];
 
-    if (!await roleManager.RoleExistsAsync(UserRole.Admin.ToString()))
+    foreach (var role in roles)
     {
-        await roleManager.CreateAsync(new User
+        if (!await roleManager.RoleExistsAsync(role))
         {
-            Email = "admin@ruthmo.com",
-            Role = UserRole.Admin,
-        });
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
     }
 
     // Optional: Create an admin user
@@ -81,8 +81,8 @@ using (var scope = app.Services.CreateScope())
     if (adminUser == null)
     {
         adminUser = new User { UserName = adminEmail, Email = adminEmail };
-        await userManager.CreateAsync(adminUser, "Admin@123");
-        await userManager.AddToRoleAsync(adminUser, UserRole.Admin.ToString());
+        await userManager.CreateAsync(adminUser, "Admin@123"); // Change this to a secure password
+        await userManager.AddToRoleAsync(adminUser, "Admin");
     }
 }
 

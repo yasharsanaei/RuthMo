@@ -8,5 +8,4 @@ public class User : IdentityUser
     [EmailAddress] public override string Email { get; set; } = "";
     [MaxLength(50)] public string? NickName { get; set; }
     public ICollection<Motivation> Motivations { get; set; } = null!;
-    public UserRole Role { get; set; } = UserRole.User;
 }

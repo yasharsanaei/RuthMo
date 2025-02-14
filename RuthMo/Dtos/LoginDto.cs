@@ -2,6 +2,6 @@ namespace RuthMo.Dtos;
 
 public class LoginDto
 {
-    public readonly string Email = string.Empty;
-    public readonly string Password = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }

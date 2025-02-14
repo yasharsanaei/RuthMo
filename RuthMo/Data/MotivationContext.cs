@@ -1,15 +1,11 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RuthMo.Models;
 
-namespace RuthMo.Data;
+namespace RuthMo.Models;
 
-public class MotivationContext : DbContext
+public class MotivationContext : IdentityDbContext<User>
 {
-    public DbSet<Motivation> Motivations { get; set; } = null!;
-    public DbSet<User> Authors { get; set; } = null!;
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public MotivationContext(DbContextOptions<MotivationContext> options) : base(options)
     {
-        optionsBuilder.UseNpgsql(@"Host=localhost:5432;Username=postgres;Password=831373;Database=ruthmo");
     }
 }
