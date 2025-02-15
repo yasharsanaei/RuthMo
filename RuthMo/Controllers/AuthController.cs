@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Mapster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -25,7 +27,7 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
-    [HttpPost("register")]
+    [HttpPost("Register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto model)
     {
         var user = new User { UserName = model.Email, Email = model.Email };
@@ -37,7 +39,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "User registered successfully" });
     }
 
-    [HttpPost("login")]
+    [HttpPost("Login")]
     public async Task<IActionResult> Login([FromBody] LoginDto model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
@@ -46,7 +48,7 @@ public class AuthController : ControllerBase
 
         var token = GenerateJwtToken(user);
 
-        Response.Cookies.Append("AuthCookie", token, new CookieOptions
+        Response.Cookies.Append(_configuration["Jwt:CookieKey"]!, token, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
@@ -56,11 +58,28 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Login successful" });
     }
 
-    [HttpPost("logout")]
+    [HttpPost("Logout")]
     public IActionResult Logout()
     {
-        Response.Cookies.Delete("AuthCookie");
+        Response.Cookies.Delete(_configuration["Jwt:CookieKey"]!);
         return Ok(new { message = "Logged out successfully" });
+    }
+
+    [Authorize]
+    [HttpGet("Me")]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId == null)
+            return Unauthorized(new { message = "Invalid or missing token" });
+
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+            return NotFound(new { message = "User not found" });
+
+        return Ok(user.Adapt<UserDto>());
     }
 
     private string GenerateJwtToken(User user)

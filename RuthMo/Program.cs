@@ -8,7 +8,7 @@ using RuthMo.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("RuthMoPostgres");
-var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]));
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!));
 
 builder.Services.AddDbContext<MotivationContext>(options => { options.UseNpgsql(connectionString); });
 
@@ -21,7 +21,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
-    options.Cookie.Name = "RuthMoCookie";
+    options.Cookie.Name = builder.Configuration["Jwt:CookieKey"]!;
     options.LoginPath = "/api/auth/login";
     options.LogoutPath = "/api/auth/logout";
 });
@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnMessageReceived = context =>
             {
-                context.Token = context.Request.Cookies["RuthMoCookie"];
+                context.Token = context.Request.Cookies[builder.Configuration["Jwt:CookieKey"]!];
                 return Task.CompletedTask;
             }
         };
