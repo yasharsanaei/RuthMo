@@ -1,8 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Mapster;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +9,7 @@ using RuthMo.Models;
 
 namespace RuthMo.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/[Controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
@@ -27,33 +25,31 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
-    [HttpPost("Register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto model)
-    {
-        var user = new User { UserName = model.Email, Email = model.Email };
-        var result = await _userManager.CreateAsync(user, model.Password);
-
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
-
-        return Ok(new { message = "User registered successfully" });
-    }
-
     [HttpPost("Login")]
     public async Task<IActionResult> Login([FromBody] LoginDto model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user == null || !(await _userManager.CheckPasswordAsync(user, model.Password)))
-            return Unauthorized();
-
-        var token = GenerateJwtToken(user);
-
-        Response.Cookies.Append(_configuration["Jwt:CookieKey"]!, token, new CookieOptions
+        if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
         {
-            Expires = DateTime.UtcNow.AddHours(1),
+            return Unauthorized(new { message = "Invalid credentials" });
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = GenerateJwtToken(user, roles);
+
+        // Response.Cookies.Append("AuthToken", token, new CookieOptions
+        // {
+        //     HttpOnly = true,
+        //     Secure = true,
+        //     SameSite = SameSiteMode.Strict
+        // });
+
+        Response.Cookies.Append("AuthToken", token, new CookieOptions
+        {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict
+            // Secure = true,  // Ensure it's secure in production
+            SameSite = SameSiteMode.Lax, // Adjust based on frontend/backend setup
+            Expires = DateTime.UtcNow.AddMinutes(60)
         });
 
         return Ok(new { message = "Login successful" });
@@ -62,44 +58,25 @@ public class AuthController : ControllerBase
     [HttpPost("Logout")]
     public IActionResult Logout()
     {
-        Response.Cookies.Delete(_configuration["Jwt:CookieKey"]!);
-        return Ok(new { message = "Logged out successfully" });
+        Response.Cookies.Delete("AuthToken");
+        return Ok(new { message = "Logged out" });
     }
 
-    [HttpGet("Me")]
-    [Authorize]
-    public async Task<IActionResult> GetCurrentUser()
+    private string GenerateJwtToken(User user, IList<string> roles)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (userId == null)
-            return Unauthorized(new { message = "Invalid or missing token" });
-
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-            return NotFound(new { message = "User not found" });
-
-        return Ok(user.Adapt<UserDto>());
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var claims = new[]
+        var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Email, user.Email)
         };
 
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: creds
+            expires: DateTime.UtcNow.AddMinutes(60),
+            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);

@@ -12,6 +12,34 @@ namespace RuthMo.Controllers
     public class UserController(MotivationContext motivationContext, UserManager<User> userManager)
         : ControllerBase
     {
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
+
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            var roles = await userManager.GetRolesAsync(user);
+
+            return Ok(new
+            {
+                id = user.Id,
+                email = user.Email,
+                nickname = user.NickName,
+                gender = user.Gender,
+                roles
+            });
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
