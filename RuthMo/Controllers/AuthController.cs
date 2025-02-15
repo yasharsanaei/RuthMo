@@ -50,6 +50,7 @@ public class AuthController : ControllerBase
 
         Response.Cookies.Append(_configuration["Jwt:CookieKey"]!, token, new CookieOptions
         {
+            Expires = DateTime.UtcNow.AddHours(1),
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict
@@ -65,8 +66,8 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Logged out successfully" });
     }
 
-    [Authorize]
     [HttpGet("Me")]
+    [Authorize]
     public async Task<IActionResult> GetCurrentUser()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -84,7 +85,7 @@ public class AuthController : ControllerBase
 
     private string GenerateJwtToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {
