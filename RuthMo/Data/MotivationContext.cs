@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace RuthMo.Models;
 
-public class MotivationContext : IdentityDbContext<User>
+public class MotivationContext : IdentityDbContext
 {
     public MotivationContext(DbContextOptions<MotivationContext> options) : base(options)
     {
