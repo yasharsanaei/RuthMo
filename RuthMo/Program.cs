@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using RuthMo.Data;
 using RuthMo.Models;
 using Swashbuckle.AspNetCore.Filters;
 using static Microsoft.AspNetCore.Builder.WebApplication;
@@ -39,7 +40,7 @@ builder.Services.AddDbContext<MotivationContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddAuthorization();
-builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+builder.Services.AddIdentityApiEndpoints<User>()
     .AddEntityFrameworkStores<MotivationContext>();
 
 var app = builder.Build();
@@ -47,7 +48,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
     string[] roles = ["Admin", "User"];
 
@@ -65,7 +66,7 @@ using (var scope = app.Services.CreateScope())
 
     if (adminUser == null)
     {
-        adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail };
+        adminUser = new User { UserName = adminEmail, Email = adminEmail };
         await userManager.CreateAsync(adminUser, "Admin@123"); // Change this to a secure password
         await userManager.AddToRoleAsync(adminUser, "Admin");
     }
@@ -82,7 +83,7 @@ else
     app.UseHsts();
 }
 
-app.MapIdentityApi<IdentityUser>();
+app.MapIdentityApi<User>();
 
 app.UseHttpsRedirection();
 app.UseCors(corsPolicyName);
