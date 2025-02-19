@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using RuthMo.Controllers;
 using RuthMo.Data;
 using RuthMo.Models;
 using Swashbuckle.AspNetCore.Filters;
@@ -40,8 +41,22 @@ builder.Services.AddDbContext<MotivationContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddAuthorization();
-builder.Services.AddIdentityApiEndpoints<User>()
-    .AddEntityFrameworkStores<MotivationContext>();
+
+// builder.Services.AddIdentityApiEndpoints<User>()
+//     .AddEntityFrameworkStores<MotivationContext>();
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<MotivationContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender<User>>();
+
+// builder.Services.Configure<IdentityOptions>(options =>
+// {
+//     options.SignIn.RequireConfirmedEmail = false; 
+// });
+
+// builder.Services.AddSingleton<IEmailSender<User>, MyCustomEmailSender>();
+// builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender<User>>();
 
 var app = builder.Build();
 
@@ -83,7 +98,7 @@ else
     app.UseHsts();
 }
 
-app.MapIdentityApi<User>();
+app.MapGroup("/api").MapIdentityApi<User>();
 
 app.UseHttpsRedirection();
 app.UseCors(corsPolicyName);
@@ -91,5 +106,5 @@ app.UseCors(corsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapGroup("/api").MapControllers();
 app.Run();
