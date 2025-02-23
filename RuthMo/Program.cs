@@ -14,15 +14,15 @@ var corsPolicyName = "RuthMoCors";
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(optiosn =>
+builder.Services.AddSwaggerGen(options =>
 {
-    optiosn.AddSecurityDefinition("oath2", new OpenApiSecurityScheme
+    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey
     });
-    optiosn.OperationFilter<SecurityRequirementsOperationFilter>();
+    options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
 builder.Services.AddCors(options =>
@@ -40,23 +40,38 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<MotivationContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddIdentity<User, IdentityRole>(options => { options.SignIn.RequireConfirmedAccount = false; })
+    .AddRoles<IdentityRole>()
+    .AddSignInManager()
+    .AddApiEndpoints()
+    .AddDefaultTokenProviders()
+    .AddEntityFrameworkStores<MotivationContext>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.Name = ".AspNetCore.Identity.Application";
+    options.LoginPath = "/login";
+    options.LogoutPath = "/login";
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+});
+
 builder.Services.AddAuthorization();
-
-// builder.Services.AddIdentityApiEndpoints<User>()
-//     .AddEntityFrameworkStores<MotivationContext>();
-builder.Services.AddIdentity<User, IdentityRole>()
-    .AddEntityFrameworkStores<MotivationContext>()
-    .AddDefaultTokenProviders();
-
 builder.Services.AddSingleton<IEmailSender<User>, NoOpEmailSender<User>>();
 
-// builder.Services.Configure<IdentityOptions>(options =>
-// {
-//     options.SignIn.RequireConfirmedEmail = false; 
-// });
-
-// builder.Services.AddSingleton<IEmailSender<User>, MyCustomEmailSender>();
-// builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender<User>>();
+// Add logging for debugging
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole();
+    logging.SetMinimumLevel(LogLevel.Debug);
+    logging.AddFilter("Microsoft.AspNetCore.Identity", LogLevel.Debug);
+    logging.AddFilter("Microsoft.AspNetCore.Authentication", LogLevel.Debug);
+});
 
 var app = builder.Build();
 
@@ -66,7 +81,6 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
     string[] roles = ["Admin", "User"];
-
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -75,19 +89,16 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Optional: Create an admin user
     const string adminEmail = "admin@ruthmo.com";
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
     if (adminUser == null)
     {
         adminUser = new User { UserName = adminEmail, Email = adminEmail };
-        await userManager.CreateAsync(adminUser, "Admin@123"); // Change this to a secure password
+        await userManager.CreateAsync(adminUser, "Admin@123");
         await userManager.AddToRoleAsync(adminUser, "Admin");
     }
 }
 
-// Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -106,5 +117,5 @@ app.UseCors(corsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGroup("/api").MapControllers();
+app.MapControllers();
 app.Run();
