@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.InteropServices.JavaScript;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using RuthMo.Data;
@@ -17,7 +19,8 @@ namespace RuthMo.Controllers
         UserManager<RuthMoUser> userManager,
         RoleManager<IdentityRole> roleManager,
         AppDbContext context,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        TokenValidationParameters tokenValidationParameters)
         : ControllerBase
     {
         [HttpPost("register")]
@@ -57,7 +60,7 @@ namespace RuthMo.Controllers
                 var isPasswordCorrect = await userManager.CheckPasswordAsync(user, loginDto.Password);
                 if (isPasswordCorrect)
                 {
-                    var token = await GenerateJwtTokenAsync(user);
+                    var token = await GenerateJwtTokenAsync(user, null);
                     return Ok(token);
                 }
             }
@@ -65,7 +68,46 @@ namespace RuthMo.Controllers
             return Unauthorized();
         }
 
-        private async Task<AuthDto> GenerateJwtTokenAsync(RuthMoUser user)
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<AuthDto>> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("PLease Send all required fields");
+            }
+
+            var result = await VerifyAndGenerateTokenAsync(refreshTokenDto);
+
+            return Ok(result);
+        }
+
+        private async Task<AuthDto?> VerifyAndGenerateTokenAsync(RefreshTokenDto refreshTokenDto)
+        {
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var storedToken =
+                await context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshTokenDto.RefreshToken);
+
+            if (storedToken == null) return null;
+
+            var dbUser = await userManager.FindByIdAsync(storedToken.UserId);
+
+            if (dbUser == null) return null;
+
+            try
+            {
+                var tokenCheckResult = jwtSecurityTokenHandler.ValidateToken(refreshTokenDto.Token,
+                    tokenValidationParameters, out var validatedToken);
+                return await GenerateJwtTokenAsync(dbUser, storedToken);
+            }
+            catch (SecurityTokenExpiredException e)
+            {
+                if (storedToken.DateExpire >= DateTime.UtcNow) return await GenerateJwtTokenAsync(dbUser, storedToken);
+
+                return await GenerateJwtTokenAsync(dbUser, null);
+            }
+        }
+
+        private async Task<AuthDto> GenerateJwtTokenAsync(RuthMoUser user, RefreshToken? rToken)
         {
             var authClaims = new List<Claim>
             {
@@ -87,9 +129,33 @@ namespace RuthMo.Controllers
             );
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
 
+            if (rToken != null)
+            {
+                return new AuthDto
+                {
+                    Token = jwtToken,
+                    RefreshToken = rToken.Token,
+                    ExpiresAt = token.ValidTo
+                };
+            }
+
+            var refreshToken = new RefreshToken
+            {
+                JwtId = token.Id,
+                IsRevoked = false,
+                UserId = user.Id,
+                DateAdded = DateTime.UtcNow,
+                DateExpire = DateTime.UtcNow.AddMonths(6),
+                Token = $"{Guid.NewGuid().ToString()}-{Guid.NewGuid().ToString()}"
+            };
+
+            await context.RefreshTokens.AddAsync(refreshToken);
+            await context.SaveChangesAsync();
+
             return new AuthDto
             {
                 Token = jwtToken,
+                RefreshToken = refreshToken.Token,
                 ExpiresAt = token.ValidTo
             };
         }

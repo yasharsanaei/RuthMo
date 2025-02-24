@@ -10,6 +10,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("RuthMoPostgres");
 builder.Services.AddDbContext<AppDbContext>(options => { options.UseNpgsql(connectionString); });
+
+var tokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["JWT:Secret"]!)),
+    ValidateIssuer = true,
+    ValidIssuer = builder.Configuration["JWT:Issuer"]!,
+    ValidateAudience = true,
+    ValidAudience = builder.Configuration["JWT:Audience"]!,
+
+    ValidateLifetime = true,
+    ClockSkew = TimeSpan.Zero
+};
+builder.Services.AddSingleton(tokenValidationParameters);
+
 builder.Services.AddIdentity<RuthMoUser, IdentityRole>(options => { options.User.RequireUniqueEmail = true; })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -23,20 +38,11 @@ builder.Services.AddAuthentication(options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["JWT:Secret"]!)),
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"]!,
-        ValidateAudience = true,
-        ValidAudience = builder.Configuration["JWT:Audience"]!,
-    };
+    options.TokenValidationParameters = tokenValidationParameters;
 });
 
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

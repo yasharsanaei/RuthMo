@@ -12,5 +12,5 @@ public class RefreshToken
     public required DateTime DateAdded { get; set; }
     public required DateTime DateExpire { get; set; }
     public string UserId { get; set; }
-    [ForeignKey(nameof(UserId))] public RuthMoUser User { get; set; }
+    [ForeignKey(nameof(UserId))] public virtual RuthMoUser User { get; set; }
 }
