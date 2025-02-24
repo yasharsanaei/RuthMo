@@ -24,11 +24,18 @@ namespace RuthMo.Controllers
                 return BadRequest("Please fill required fields.");
             }
 
-            var isUserExist = await userManager.FindByEmailAsync(registerDto.Email);
+            var isUserEmailExist = await userManager.FindByEmailAsync(registerDto.Email);
 
-            if (isUserExist != null)
+            if (isUserEmailExist != null)
             {
                 return BadRequest("This email address exist on our servers!");
+            }
+            
+            var isUserUsernameExist = await userManager.FindByNameAsync(registerDto.Username);
+            
+            if (isUserUsernameExist != null)
+            {
+                return BadRequest("This username address exist on our servers!");
             }
 
             RuthMoUser ruthMoUser = new RuthMoUser
@@ -36,12 +43,13 @@ namespace RuthMo.Controllers
                 FirstName = registerDto.FirstName,
                 LastName = registerDto.LastName,
                 Email = registerDto.Email,
+                UserName = registerDto.Username,
                 SecurityStamp = Guid.NewGuid().ToString()
             };
 
             var result = await userManager.CreateAsync(ruthMoUser, registerDto.Password);
 
-            return result.Succeeded ? Ok(result) : BadRequest("Can not create the user :(");
+            return result.Succeeded ? Ok(result) : BadRequest(result.Errors);
         }
     }
 }

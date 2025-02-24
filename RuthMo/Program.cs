@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("RuthMoPostgres");
 builder.Services.AddDbContext<AppDbContext>(options => { options.UseNpgsql(connectionString); });
-builder.Services.AddIdentity<RuthMoUser, IdentityRole>()
+builder.Services.AddIdentity<RuthMoUser, IdentityRole>(options => { options.User.RequireUniqueEmail = true; })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 

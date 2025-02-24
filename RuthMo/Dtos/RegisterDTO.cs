@@ -8,5 +8,6 @@ public class RegisterDto
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     [Required] [EmailAddress] public required string Email { get; set; }
+    [Required] public required string Username { get; set; }
     [Required] [PasswordPropertyText] public required string Password { get; set; }
 }
