@@ -7,4 +7,5 @@ namespace RuthMo.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<RuthMoUser>(options)
 {
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Motivation> Motivations { get; set; }
 }

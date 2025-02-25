@@ -42,7 +42,8 @@ namespace RuthMo.Controllers
                 LastName = registerDto.LastName,
                 Email = registerDto.Email,
                 UserName = registerDto.Username,
-                SecurityStamp = Guid.NewGuid().ToString()
+                SecurityStamp = Guid.NewGuid().ToString(),
+                CreatedAt = DateTime.UtcNow
             };
 
             var result = await userManager.CreateAsync(ruthMoUser, registerDto.Password);
@@ -125,9 +126,9 @@ namespace RuthMo.Controllers
             var userRoles = await userManager.GetRolesAsync(user);
             foreach (var role in userRoles)
             {
-                authClaims.Add(new (ClaimTypes.Role, role));
+                authClaims.Add(new(ClaimTypes.Role, role));
             }
-            
+
             var authSigningKey =
                 new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]!));
 
