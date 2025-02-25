@@ -1,6 +1,6 @@
 @RuthMo_HostAddress = http://localhost:5292
 
-GET {{RuthMo_HostAddress}}/weatherforecast/
-Accept: application/json
+#GET {{RuthMo_HostAddress}}/weatherforecast/
+#Accept: application/json
 
 ###
