@@ -63,4 +63,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+AppDbInitializer.SeedRoleToDb(app).Wait();
+
 app.Run();

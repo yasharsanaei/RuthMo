@@ -46,6 +46,10 @@ namespace RuthMo.Controllers
             };
 
             var result = await userManager.CreateAsync(ruthMoUser, registerDto.Password);
+            if (result.Succeeded)
+            {
+                await userManager.AddToRolesAsync(ruthMoUser, [RuthMoUserRoles.User.ToString()]);
+            }
 
             return result.Succeeded ? Ok(result) : BadRequest(result.Errors);
         }
@@ -117,6 +121,13 @@ namespace RuthMo.Controllers
                 new(JwtRegisteredClaimNames.Sub, user.Email!),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
+
+            var userRoles = await userManager.GetRolesAsync(user);
+            foreach (var role in userRoles)
+            {
+                authClaims.Add(new (ClaimTypes.Role, role));
+            }
+            
             var authSigningKey =
                 new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]!));
 
