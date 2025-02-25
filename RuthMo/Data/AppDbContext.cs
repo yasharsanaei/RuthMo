@@ -4,11 +4,7 @@ using RuthMo.Models;
 
 namespace RuthMo.Data;
 
-public class AppDbContext : IdentityDbContext<RuthMoUser>
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<RuthMoUser>(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
-    
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 }
