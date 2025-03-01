@@ -41,6 +41,17 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = tokenValidationParameters;
 });
 
+// Add after other services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecific", policy =>
+    {
+        policy.WithOrigins("http://localhost:5183")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -62,6 +73,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("AllowSpecific");
 
 AppDbInitializer.SeedRoleToDb(app).Wait();
 
