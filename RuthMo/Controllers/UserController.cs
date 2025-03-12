@@ -15,7 +15,6 @@ namespace RuthMo.Controllers
     [ApiController]
     public class UserController(
         UserManager<RuthMoUser> userManager,
-        RoleManager<RuthMoUser> roleManager,
         AppDbContext context) : ControllerBase
     {
         [Authorize]
@@ -116,7 +115,7 @@ namespace RuthMo.Controllers
         public async Task<ActionResult<UserDTO[]>> GetAllAdmins()
         {
             var users = await userManager.GetUsersInRoleAsync("Admin");
-            return Ok(users.ToList().Adapt<UserDTO[]>());
+            return Ok(users.Adapt<List<UserDTO>>());
         }
 
         [Authorize]
