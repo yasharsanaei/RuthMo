@@ -19,7 +19,7 @@ namespace RuthMo.Controllers
     {
         [Authorize]
         [HttpGet("me")]
-        public async Task<ActionResult<RuthMoUser>> Me()
+        public async Task<ActionResult<UserDTO>> Me()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)

@@ -8,6 +8,6 @@ public class Motivation
     [Key] public int Id { get; set; }
 
     [MaxLength(100)] public required string Content { get; set; } = string.Empty;
-    public string UserId { get; set; }
+    public required string UserId { get; set; }
     [ForeignKey(nameof(UserId))] public virtual RuthMoUser User { get; set; }
 }

@@ -44,7 +44,7 @@ namespace RuthMo.Controllers
             var motivation = new Motivation
             {
                 Content = motivationDto.Content,
-                UserId = userId!
+                UserId = userId!,
             };
             var createdMotivation = await appDbContext.Motivations.AddAsync(motivation);
             await appDbContext.SaveChangesAsync();
