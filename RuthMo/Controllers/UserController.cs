@@ -120,7 +120,7 @@ namespace RuthMo.Controllers
 
         [Authorize]
         [HttpGet("")]
-        public async Task<ActionResult<UserDTO[]>> GetAllUsers(
+        public async Task<ActionResult<PagedResult<UserDTO>>> GetAllUsers(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             [FromQuery] string? search = null)
@@ -138,8 +138,8 @@ namespace RuthMo.Controllers
 
             var pagedUser = await query.OrderBy(u => u.Id)
                 .AsNoTracking().ToPagedResultAsync(page, pageSize);
-
-            return Ok(pagedUser.Adapt<PagedResult<UserDTO>[]>());
+            
+            return Ok(pagedUser.Adapt<PagedResult<UserDTO>>());
         }
     }
 }
