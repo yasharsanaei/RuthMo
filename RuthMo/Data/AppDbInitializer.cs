@@ -28,7 +28,7 @@ public static class AppDbInitializer
                     Email = "admin@ruthmo.com",
                     UserName = "admin",
                     SecurityStamp = Guid.NewGuid().ToString(),
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var result = await userManager.CreateAsync(ruthMoAdmin, "Admin@123");

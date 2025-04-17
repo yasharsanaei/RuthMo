@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,25 +16,19 @@ namespace RuthMo.Controllers
     public class MotivationController(AppDbContext appDbContext, UserManager<RuthMoUser> userManager) : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<List<Motivation>>> GetAll()
+        public async Task<ActionResult<List<MotivationDto>>> GetAll()
         {
-            var motivations = await appDbContext.Motivations.ToListAsync();
-            return Ok(motivations);
+            var motivations =
+                await appDbContext.Motivations
+                    .Include(m => m.User)
+                    .ToListAsync();
+            return Ok(motivations.Adapt<MotivationDto[]>());
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<Motivation>> Create([FromBody] MotivationDto motivationDto)
+        public async Task<ActionResult<MotivationDto>> Create([FromBody] CreateMotivationDto dto)
         {
-            try
-            {
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-
             var user = HttpContext.User;
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId.IsNullOrEmpty())
@@ -41,19 +36,23 @@ namespace RuthMo.Controllers
                 return Unauthorized("User Id not found!");
             }
 
+
             var motivation = new Motivation
             {
-                Content = motivationDto.Content,
+                Content = dto.Content,
                 UserId = userId!,
+                Status = user.IsInRole(RuthMoUserRoles.Admin.ToString())
+                    ? MotivationStatus.Accept
+                    : MotivationStatus.Waiting
             };
             var createdMotivation = await appDbContext.Motivations.AddAsync(motivation);
             await appDbContext.SaveChangesAsync();
-            return Ok(createdMotivation.Entity);
+            return Ok(createdMotivation.Entity.Adapt<MotivationDto>());
         }
 
         [Authorize]
         [HttpPut]
-        public async Task<ActionResult<Motivation>> Update([FromBody] UpdateMotivationDto updateMotivation)
+        public async Task<ActionResult<MotivationDto>> Update([FromBody] UpdateMotivationDto updateMotivation)
         {
             if (!ModelState.IsValid)
             {
@@ -77,7 +76,7 @@ namespace RuthMo.Controllers
             appDbContext.Motivations.Update(motivation);
             await appDbContext.SaveChangesAsync();
 
-            return Ok(motivation);
+            return Ok(motivation.Adapt<MotivationDto>());
         }
     }
 }

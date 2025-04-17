@@ -7,7 +7,8 @@ public class Motivation
 {
     [Key] public int Id { get; set; }
 
-    [MaxLength(100)] public required string Content { get; set; } = string.Empty;
+    [MaxLength(4000)] public required string Content { get; set; } = string.Empty;
+    public required MotivationStatus Status { get; set; } = MotivationStatus.Waiting;
     public required string UserId { get; set; }
     [ForeignKey(nameof(UserId))] public virtual RuthMoUser User { get; set; }
 }
