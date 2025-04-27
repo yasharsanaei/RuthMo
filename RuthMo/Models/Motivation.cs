@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RuthMo.Models;
 
-public class Motivation
+public class Motivation : _BaseModel
 {
-    [Key] public int Id { get; set; }
-
     [MaxLength(4000)] public required string Content { get; set; } = string.Empty;
     public required MotivationStatus Status { get; set; } = MotivationStatus.Waiting;
     public required string UserId { get; set; }

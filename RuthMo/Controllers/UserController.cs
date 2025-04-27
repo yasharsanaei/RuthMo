@@ -19,7 +19,7 @@ namespace RuthMo.Controllers
     {
         [Authorize]
         [HttpGet("me")]
-        public async Task<ActionResult<UserDTO>> Me()
+        public async Task<ActionResult<UserDto>> Me()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
@@ -35,20 +35,22 @@ namespace RuthMo.Controllers
 
             var roles = await userManager.GetRolesAsync(user);
 
-            return Ok(new UserDTO
+            return Ok(new UserDto
             {
                 Id = user.Id,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
                 UserName = user.UserName,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
             });
         }
 
         [Authorize]
         [HttpPut("me")]
-        public async Task<ActionResult<UserDTO>> Update(UserUpdateDto user)
+        public async Task<ActionResult<UserDto>> Update(UserUpdateDto user)
         {
             if (!ModelState.IsValid)
             {
@@ -78,12 +80,12 @@ namespace RuthMo.Controllers
                 return BadRequest(result.Errors);
             }
 
-            return Ok(userFullData.Adapt<UserDTO>());
+            return Ok(userFullData.Adapt<UserDto>());
         }
 
         [Authorize]
         [HttpPut("")]
-        public async Task<ActionResult<UserDTO>> UpdateUser(UserUpdateDto user)
+        public async Task<ActionResult<UserDto>> UpdateUser(UserUpdateDto user)
         {
             if (!ModelState.IsValid)
             {
@@ -107,20 +109,20 @@ namespace RuthMo.Controllers
                 return BadRequest(result.Errors);
             }
 
-            return Ok(userFullData.Adapt<UserDTO>());
+            return Ok(userFullData.Adapt<UserDto>());
         }
 
         [Authorize]
         [HttpGet("admins")]
-        public async Task<ActionResult<UserDTO[]>> GetAllAdmins()
+        public async Task<ActionResult<UserDto[]>> GetAllAdmins()
         {
             var users = await userManager.GetUsersInRoleAsync("Admin");
-            return Ok(users.Adapt<List<UserDTO>>());
+            return Ok(users.Adapt<List<UserDto>>());
         }
 
         [Authorize]
         [HttpGet("")]
-        public async Task<ActionResult<PagedResult<UserDTO>>> GetAllUsers(
+        public async Task<ActionResult<PagedResult<UserDto>>> GetAllUsers(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             [FromQuery] string? search = null)
@@ -138,8 +140,8 @@ namespace RuthMo.Controllers
 
             var pagedUser = await query.OrderBy(u => u.Id)
                 .AsNoTracking().ToPagedResultAsync(page, pageSize);
-            
-            return Ok(pagedUser.Adapt<PagedResult<UserDTO>>());
+
+            return Ok(pagedUser.Adapt<PagedResult<UserDto>>());
         }
     }
 }
