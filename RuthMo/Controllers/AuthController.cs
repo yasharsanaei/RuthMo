@@ -1,12 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.InteropServices.JavaScript;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using RuthMo.Data;
 using RuthMo.Dtos;
 using RuthMo.Models;
