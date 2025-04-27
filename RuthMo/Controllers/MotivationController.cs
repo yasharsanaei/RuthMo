@@ -27,7 +27,7 @@ namespace RuthMo.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<MotivationDto>> Create([FromBody] CreateMotivationDto dto)
+        public async Task<ActionResult<MotivationDto>> Create([FromBody] MotivationCreateDto dto)
         {
             var user = HttpContext.User;
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -52,7 +52,7 @@ namespace RuthMo.Controllers
 
         [Authorize]
         [HttpPut]
-        public async Task<ActionResult<MotivationDto>> Update([FromBody] UpdateMotivationDto updateMotivation)
+        public async Task<ActionResult<MotivationDto>> Update([FromBody] MotivationUpdateDto updateMotivation)
         {
             if (!ModelState.IsValid)
             {

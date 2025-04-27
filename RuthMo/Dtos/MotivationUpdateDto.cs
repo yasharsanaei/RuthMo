@@ -1,6 +1,6 @@
 namespace RuthMo.Dtos;
 
-public class CreateMotivationDto
+public class MotivationUpdateDto : BaseUpdateDto
 {
     public required string Content { get; set; }
 }
